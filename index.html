@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Дана · бесконечность комплиментов</title>
+    <title>Дана · комплименты с магией</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* чтобы не выделялся текст случайно */
+            user-select: none;
         }
 
         body {
@@ -20,9 +20,41 @@
             justify-content: center;
             font-family: system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        /* главная карточка — как облако */
+        /* контейнер для падающих сердечек */
+        .heart-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .falling-heart {
+            position: absolute;
+            font-size: 28px;
+            opacity: 0.8;
+            animation: fall linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-20vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(120vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
         .angel-card {
             max-width: 550px;
             width: 100%;
@@ -32,10 +64,21 @@
             padding: 2rem 1.8rem 2.2rem;
             box-shadow: 0 30px 45px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 210, 200, 0.5);
             text-align: center;
-            transition: all 0.2s;
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s;
         }
 
-        /* имя с лёгким свечением */
+        .angel-card.shaking {
+            animation: cardShake 0.3s ease-in-out 3;
+        }
+
+        @keyframes cardShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(4px); }
+            75% { transform: translateX(-4px); }
+        }
+
         .name {
             font-size: 3rem;
             font-weight: 600;
@@ -45,7 +88,6 @@
             -webkit-background-clip: text;
             color: transparent;
             margin-bottom: 0.25rem;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
 
         .sub {
@@ -57,7 +99,6 @@
             margin-bottom: 24px;
         }
 
-        /* контейнер для комплимента — крупно и нежно */
         .compliment-box {
             background: #ffffffd9;
             border-radius: 48px;
@@ -71,15 +112,14 @@
             line-height: 1.35;
             font-weight: 450;
             color: #2C2A42;
-            transition: all 0.2s ease;
             min-height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
             word-break: break-word;
+            animation: softGlow 0.25s ease-out;
         }
 
-        /* кнопка — нежная, но заметная */
         .angel-button {
             background: #fff0eb;
             border: none;
@@ -93,15 +133,12 @@
             gap: 10px;
             cursor: pointer;
             transition: all 0.25s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
-            backdrop-filter: blur(4px);
             margin-top: 8px;
         }
 
         .angel-button:hover {
             background: #ffe3dc;
             transform: scale(1.02);
-            box-shadow: 0 12px 20px -12px rgba(160, 100, 100, 0.3);
             color: #914e70;
         }
 
@@ -109,97 +146,158 @@
             transform: scale(0.98);
         }
 
-        /* счётчик комплиментов – лёгкий акцент */
+        /* магическая кнопка — появляется только после 10 комплиментов */
+        .magic-button {
+            background: linear-gradient(135deg, #FFD166, #FF9F7C);
+            color: white;
+            margin-left: 12px;
+            box-shadow: 0 4px 15px rgba(255, 100, 100, 0.3);
+            display: none;
+        }
+
+        .magic-button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #FFC857, #FF8C5A);
+            color: white;
+        }
+
         .counter {
             font-size: 0.7rem;
             color: #cfa2b2;
             margin-top: 28px;
-            letter-spacing: 0.3px;
             border-top: 1px solid #ffe0d6;
             padding-top: 18px;
             display: flex;
             justify-content: center;
             gap: 18px;
+            flex-wrap: wrap;
         }
 
-        /* звёздный декор */
+        /* прогресс-бар к магии */
+        .progress-area {
+            margin-top: 16px;
+            background: #f3e1da;
+            border-radius: 30px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #FF9F7C, #FF6B8A);
+            width: 0%;
+            height: 100%;
+            border-radius: 30px;
+            transition: width 0.3s ease;
+        }
+
+        .magic-hint {
+            font-size: 11px;
+            color: #cc9a8a;
+            margin-top: 8px;
+        }
+
         .tiny-star {
             font-size: 12px;
             opacity: 0.6;
+            margin-top: 10px;
+        }
+
+        /* финальное сообщение */
+        .final-message {
+            margin-top: 20px;
+            background: #fff0eb;
+            border-radius: 40px;
+            padding: 16px;
+            display: none;
+            font-size: 1rem;
+            color: #b13b5c;
+            font-weight: 500;
+            animation: softGlow 0.4s ease-out;
         }
 
         @media (max-width: 480px) {
-            .angel-card {
-                padding: 1.5rem;
-            }
-            .compliment-text {
-                font-size: 1.4rem;
-            }
-            .name {
-                font-size: 2.5rem;
-            }
+            .angel-card { padding: 1.5rem; }
+            .compliment-text { font-size: 1.4rem; }
+            .name { font-size: 2.5rem; }
         }
 
-        /* анимация появления */
         @keyframes softGlow {
             0% { opacity: 0.6; transform: translateY(6px);}
             100% { opacity: 1; transform: translateY(0);}
-        }
-        .compliment-text {
-            animation: softGlow 0.25s ease-out;
         }
     </style>
 </head>
 <body>
 
-<div class="angel-card">
+<div class="heart-rain" id="heartRain"></div>
+
+<div class="angel-card" id="card">
     <div class="name">Дана ✧</div>
-    <div class="sub">собрание комплиментов для самой самой</div>
+    <div class="sub">10 комплиментов = магия</div>
 
     <div class="compliment-box">
         <div class="compliment-text" id="complimentDisplay">
-            твои глаза — будто кусочек неба, который случайно оказался на земле
+            💙 нажми на кнопку, чтобы начать 💙
         </div>
     </div>
 
-    <button class="angel-button" id="nextComplimentBtn">
-        ✨ ещё комплимент ✨
-    </button>
-    <div class="tiny-star">нажимай — каждый раз новое признание</div>
+    <div>
+        <button class="angel-button" id="nextComplimentBtn">
+            ✨ ещё комплимент ✨
+        </button>
+        <button class="angel-button magic-button" id="magicBtn">
+            🌟 ВКЛЮЧИТЬ МАГИЮ 🌟
+        </button>
+    </div>
+
+    <div class="progress-area">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="magic-hint" id="magicHint">💫 нажми «ещё комплимент» 10 раз — откроется волшебство</div>
+
+    <div class="final-message" id="finalMessage">
+        💖✨ Спасибо, что ты есть. Ты сделала мой день просто своим существованием. ✨💖
+    </div>
+
+    <div class="counter">
+        <span>💙 голубые глаза</span>
+        <span>🪽 гладкая кожа</span>
+        <span>🎵 ангельский голос</span>
+        <span>👁️ ресницы</span>
+        <span>😊 улыбка</span>
+    </div>
+    <div class="tiny-star">✨ 10 комплиментов = магия ✨</div>
 </div>
 
 <script>
-    // КОЛЛЕКЦИЯ КОМПЛИМЕНТОВ — индивидуально для Даны
+    // ТВОИ КОМПЛИМЕНТЫ (скопировано в точности)
     const compliments = [
-        "Дана, твои голубые глаза сияют ярче, чем полярная звезда в ясную ночь.",
-        "У тебя не просто кожа — она как лепесток магнолии: невероятно гладкая и светящаяся.",
-        "Когда ты говоришь, кажется, что ангелы учат тебя петь. Твой голос — чистая магия.",
+        "Твои голубые глаза сияют ярче, чем полярная звезда в тёмную ночь.",
         "Твои ресницы — как бархатные крылья бабочки. Они делают твой взгляд глубже океана.",
-        "Дана, твоя кожа настолько гладкая, что время останавливается, когда я смотрю на твои руки.",
-        "голос, которым ты произносишь моё имя — это мелодия, которую я хочу слушать вечность.",
         "Твои глаза — два маленьких неба, в которых хочется заблудиться навсегда.",
         "Каждая твоя ресничка — словно штрих гения. Даже просто моргание выглядит искусством.",
-        "Твоя кожа пахнет молоком и ванилью… я никогда не чувствовал ничего более нежного.",
-        "Дана, когда ты поёшь даже просто напевая, мир становится добрее. Искренне.",
         "В твоих голубых глазах отражается всё хорошее, что есть в этом мире.",
         "Твоя кожа гладкая, как первый снег, который никто не успел тронуть.",
-        "Я боюсь, что твои ресницы однажды поднимутся так высоко, что ты улетишь в рай… останься здесь.",
         "Твой голос звучит как самый ценный инструмент в оркестре вселенной.",
-        "Ты можешь просто промолчать — и даже твоя тишина музыкальна. Спасибо за твой голос, Дана.",
         "Твоя кожа — это шёлк, по которому хочется писать стихи кончиками пальцев.",
-        "Если бы у ангелов был Instagram, твои глаза собирали бы миллионы лайков.",
-        "Дана, твои ресницы такие длинные, что создают тень… и в этой тени я хочу прятаться от всех проблем.",
-        "Голос, который заставляет сердце биться медленнее, а потом вдруг — быстрее. Это про тебя.",
-        "Твоя кожа поглажена ветром и лунным светом. Никакой шёлк не сравнится."
+        "Когда ты улыбаешься — внутри всё переключается на хорошее настроение.",
+        "Твои голубые глаза даже без слов говорят больше, чем чужие получасовые монологи."
     ];
 
-    let currentIndex = 0;
-    const displayDiv = document.getElementById('complimentDisplay');
-    const btn = document.getElementById('nextComplimentBtn');
-
-    // функция показа случайного комплимента (но с приоритетом чтобы не повторялись слишком часто)
     let lastIndex = -1;
+    let complimentCount = 0;      // сколько комплиментов показали
+    let magicUnlocked = false;    // открыта ли магия
 
+    const displayDiv = document.getElementById('complimentDisplay');
+    const nextBtn = document.getElementById('nextComplimentBtn');
+    const magicBtn = document.getElementById('magicBtn');
+    const progressFill = document.getElementById('progressFill');
+    const magicHint = document.getElementById('magicHint');
+    const finalMessageDiv = document.getElementById('finalMessage');
+    const card = document.getElementById('card');
+
+    // получить случайный комплимент (без повторов подряд)
     function getRandomCompliment() {
         let newIndex;
         do {
@@ -209,28 +307,92 @@
         return compliments[newIndex];
     }
 
-    function updateCompliment() {
+    // обновить прогресс и проверить, открывать ли магию
+    function updateProgress() {
+        let percent = (complimentCount / 10) * 100;
+        if (percent > 100) percent = 100;
+        progressFill.style.width = percent + '%';
+
+        if (complimentCount >= 10 && !magicUnlocked) {
+            magicUnlocked = true;
+            magicBtn.style.display = 'inline-flex';
+            magicHint.innerHTML = '✨ МАГИЯ РАЗБЛОКИРОВАНА! Нажми на блестящую кнопку ✨';
+            magicHint.style.color = '#FF6B8A';
+            magicHint.style.fontWeight = 'bold';
+        }
+    }
+
+    // показать новый комплимент
+    function showNewCompliment() {
+        if (complimentCount < 10) {
+            complimentCount++;
+            updateProgress();
+        }
+
         const newText = getRandomCompliment();
-        // небольшая плавная смена
         displayDiv.style.opacity = '0';
         setTimeout(() => {
             displayDiv.innerText = newText;
             displayDiv.style.opacity = '1';
         }, 80);
-        // лёгкая вибрация на мобилках если хочется (очень деликатно)
+
         if (navigator.vibrate) navigator.vibrate(20);
     }
 
-    // обработчик кнопки
-    btn.addEventListener('click', updateCompliment);
+    // запустить ливень сердечек
+    function startHeartRain() {
+        const container = document.getElementById('heartRain');
+        
+        // убираем старые сердечки
+        container.innerHTML = '';
+        
+        // создаём 60 падающих сердечек
+        for (let i = 0; i < 60; i++) {
+            setTimeout(() => {
+                const heart = document.createElement('div');
+                heart.className = 'falling-heart';
+                heart.innerHTML = ['❤️', '💖', '💗', '💓', '💘', '💝', '✨'][Math.floor(Math.random() * 7)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.fontSize = (20 + Math.random() * 30) + 'px';
+                heart.style.animationDuration = (2 + Math.random() * 3) + 's';
+                heart.style.animationDelay = (Math.random() * 1.5) + 's';
+                container.appendChild(heart);
+                
+                // удаляем сердечко после анимации
+                setTimeout(() => {
+                    if (heart.parentNode) heart.remove();
+                }, 5000);
+            }, i * 40);
+        }
+        
+        // тряска карточки
+        card.classList.add('shaking');
+        setTimeout(() => card.classList.remove('shaking'), 800);
+        
+        // показываем финальное сообщение
+        finalMessageDiv.style.display = 'block';
+        
+        // скрываем магическую кнопку после использования (чтобы не спамить)
+        magicBtn.style.display = 'none';
+        
+        // меняем подсказку
+        magicHint.innerHTML = '💫 Магия активирована! Сердечки летят к тебе 💫';
+        
+        // вибрация на телефоне (если поддерживается)
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    }
 
-    // при первом открытии — тоже рандомный комплимент (не первый из списка)
+    // обработчики кнопок
+    nextBtn.addEventListener('click', showNewCompliment);
+    magicBtn.addEventListener('click', startHeartRain);
+
+    // при загрузке показываем первый случайный комплимент
     window.addEventListener('load', () => {
-        // установим случайный красивый комплимент при старте, минуя первый
         let randomStart = compliments[Math.floor(Math.random() * compliments.length)];
         displayDiv.innerText = randomStart;
-        // запомним его индекс
         lastIndex = compliments.indexOf(randomStart);
+        complimentCount = 1;
+        updateProgress();
     });
 </script>
 </body>
